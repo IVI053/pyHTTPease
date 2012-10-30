@@ -1,4 +1,3 @@
-#!/usr/bin/python
 import os
 import posixpath #mm# only needed for parent back link
 import BaseHTTPServer
@@ -11,14 +10,46 @@ except ImportError:
   from StringIO import StringIO
 from SimpleHTTPServer import SimpleHTTPRequestHandler
 
-#mm# config section
+#####
+# config section
+
+# Hide script in dir listing
+# valid:    True|False
+# default:  True
 cfg_hidescript = True
-cfg_ip = '0.0.0.0' #mm# use 0.0.0.0 for all ifs and localhost for local only
+
+# Address to listen on
+# valid:    <IP-Address>|0.0.0.0
+# default:  0.0.0.0
+cfg_ip = '0.0.0.0'
+
+# Port to listen on
+# valid:    <port>
+# default:  8000
 cfg_port = 8000
+
+# Show hidden files
+# valid:    True|False
+# default:  False
 cfg_showhidden = False
+
+# Highlight symlinks with a suffix
+# valid:    True|False
+# default:  False
 cfg_symlink_highlight = False
+
+# Suffix for symlink highlighting if on
+# valid:    <string>
+# default:  '@'
 cfg_symlink_suffix = '@'
-cfg_useimages = False
+
+# Use fancy images as icons
+# valid:    True|False
+# default:  True
+cfg_useimages = True
+
+#
+#####
 
 class RequestHandler(SimpleHTTPRequestHandler):
 
@@ -80,16 +111,16 @@ class RequestHandler(SimpleHTTPRequestHandler):
       else: f.write("<tr><td align='center'>&#x25B2;</td><td><a href='%s'>[parent dir]</a></td><td>&nbsp;</td></tr>\n" % posixpath.split(posixpath.split(displaypath)[0])[0])
     for name in list:
       
-      #mm# hide . hidden files
+      # hide . hidden files
       if name.startswith('.') and not cfg_showhidden: continue
       
-      #mm# hide script
+      # hide script
       if name.startswith(os.path.split(os.path.realpath(__file__))) and cfg_hidescript: continue
       
       fullname = os.path.join(path, name)
       displayname = linkname = name
       
-      #mm# file size
+      # file size
       filesize = os.path.getsize(fullname)
       if filesize < 1000:
         unit = ' &nbsp;B'
@@ -105,7 +136,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
         divider = 1000000000
       filesize_str = str("{0:.2f}".format(float(filesize)/divider)) + unit
       
-      # File type detection
+      # file type detection
       if name.endswith('.zip'): filetype = 'archive'
       elif name.endswith('.bz2'): filetype = 'archive'
       elif name.endswith('.7z'): filetype = 'archive'
@@ -119,11 +150,11 @@ class RequestHandler(SimpleHTTPRequestHandler):
       else: filetype = 'file'
       
       if not cfg_useimages: entrysymbol = '&#x25A1;'
-      # Append / for directories or @ for symbolic links
+      
+      # Append / for directories or @ for symbolic links (if configured)
       if os.path.isdir(fullname):
         displayname = name + "/"
         linkname = name + "/"
-        #mm#
         filesize_str = '--'
         filetype = 'folder'
         if not cfg_useimages: entrysymbol = '&#x25A0;'
@@ -146,7 +177,6 @@ class RequestHandler(SimpleHTTPRequestHandler):
     self.end_headers()
     return f
 
-os.chdir(os.path.dirname(os.path.realpath(__file__))) #mm# only needed when run as .command under OS X
 httpd = SocketServer.ThreadingTCPServer((cfg_ip, cfg_port), RequestHandler)
 print "Serving HTTP on " + str(cfg_ip) + ":" + str(cfg_port)
 httpd.serve_forever()
